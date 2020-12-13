@@ -13,10 +13,20 @@ app.use(bodyParser.json())
 
 app.post('/intake', async (req, res) => {
 	console.log(req.body);
+	console.log(`${req.body.event}-${req.body.user}-pos`);
 
-	client.set(`${req.body.event}-${req.body.user}-pos`, JSON.stringify(req.body.position));
+	if (Math.abs(req.body.position[0]) < 90) {
+		client.set(`${req.body.event}-${req.body.user}-pos`, JSON.stringify(req.body.position), err => {
+			console.log(err);
+		});
+	}
 
-	res.status(200).send();
+	setTimeout(() => {
+		client.get(`${req.body.event}-${req.body.user}-chkpt`, (err, reply) => {
+			res.status(200).send({checkpoint: reply});
+		});
+	}, 200);
+
 });
 
 app.listen(8000, () => console.log('Listening...'));

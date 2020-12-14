@@ -3,29 +3,34 @@ const express = require('express');
 const redis = require('redis');
 
 const app = express();
-const client = redis.createClient();
+const globalClient = redis.createClient();
 
-client.on('error', function(error) {
+globalClient.on('error', function(error) {
 	console.error(error);
 });
 
 app.use(bodyParser.json())
 
 app.post('/intake', async (req, res) => {
-	console.log(req.body);
-	console.log(`${req.body.event}-${req.body.user}-pos`);
 
 	if (Math.abs(req.body.position[0]) < 90) {
-		client.set(`${req.body.event}-${req.body.user}-pos`, JSON.stringify(req.body.position), err => {
-			console.log(err);
+
+		cur_client = redis.createClient();
+
+		cur_client.on('message', (channel, message) => {
+			res.status(200).send(message);
+			cur_client.quit();
+		});
+
+		cur_client.subscribe(`${req.body.event}-${req.body.user}-reply`);
+
+		globalClient.publish(`${req.body.event}-${req.body.user}-pos`, JSON.stringify(req.body.position), err => {
+			if (err) { throw err }
+		});
+		globalClient.set(`${req.body.event}-${req.body.user}-pos`, JSON.stringify(req.body.position), err => {
+			if (err) { throw err }
 		});
 	}
-
-	setTimeout(() => {
-		client.get(`${req.body.event}-${req.body.user}-chkpt`, (err, reply) => {
-			res.status(200).send({checkpoint: reply});
-		});
-	}, 200);
 
 });
 

@@ -18,7 +18,17 @@ app.post('/intake', async (req, res) => {
 		cur_client = redis.createClient();
 
 		cur_client.on('message', (channel, message) => {
-			res.status(200).send(message);
+			if (!res.headerSent) {
+				res.status(200).send(message);
+			}
+			// try {
+			// 	res.status(200).send(message);
+			// } catch (err) {
+			// 	console.error(err);
+			// 	console.error('unable to complete request');
+			// 	// I think there's a duplicate 
+			// }
+			
 			cur_client.quit();
 		});
 

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/go-redis/redis"
@@ -95,5 +96,8 @@ func main() {
 
 	http.HandleFunc("/intake", intake)
 
-	http.ListenAndServe(":80", nil)
+	port := ":" + os.Getenv("INGESTION_PORT")
+	fmt.Println("Listening on port " + port)
+
+	http.ListenAndServe(port, nil)
 }

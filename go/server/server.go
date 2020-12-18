@@ -95,5 +95,5 @@ func main() {
 
 	http.HandleFunc("/intake", intake)
 
-	http.ListenAndServe(":8000", nil)
+	http.ListenAndServe(":80", nil)
 }

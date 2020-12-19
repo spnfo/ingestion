@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/go-redis/redis"
@@ -14,7 +15,7 @@ type IntakeData struct {
 	User		int64 		`json:"user"`
 	Event		int64 		`json:"event"`
 	Req_Id 		string 		`json:"req_id"`
-	Position 	[]string	`json:"position"`
+	Position 	[]float64	`json:"position"`
 }
 
 var redisPool *redis.ClusterClient
@@ -95,5 +96,13 @@ func main() {
 
 	http.HandleFunc("/intake", intake)
 
-	http.ListenAndServe(":80", nil)
+	port := ":" + os.Getenv("INGESTION_PORT")
+	fmt.Println("Listening on port " + port)
+
+	if os.Getenv("INGESTION_PORT") == "80" {
+		http.ListenAndServeTLS(port, os.Getenv("SSL_CERT_FILENAME"), os.Getenv("SSL_KEY_FILENAME"), nil)
+	} else {
+		http.ListenAndServe(port, nil)
+	}
+	
 }

@@ -45,6 +45,7 @@ func intake(w http.ResponseWriter, req *http.Request) {
 	var msg IntakeData
 	err = json.Unmarshal(b, &msg)
 	if err != nil {
+		fmt.Println(err.Error());
 		http.Error(w, err.Error(), 500)
 		return
 	}

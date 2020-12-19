@@ -15,7 +15,7 @@ type IntakeData struct {
 	User		int64 		`json:"user"`
 	Event		int64 		`json:"event"`
 	Req_Id 		string 		`json:"req_id"`
-	Position 	[]string	`json:"position"`
+	Position 	[]float64	`json:"position"`
 }
 
 var redisPool *redis.ClusterClient

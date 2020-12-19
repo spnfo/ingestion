@@ -99,5 +99,10 @@ func main() {
 	port := ":" + os.Getenv("INGESTION_PORT")
 	fmt.Println("Listening on port " + port)
 
-	http.ListenAndServe(port, nil)
+	if os.Getenv("INGESTION_PORT") == "80" {
+		http.ListenAndServeTLS(port, os.Getenv("SSL_CERT_FILENAME"), os.Getenv("SSL_KEY_FILENAME"), nil)
+	} else {
+		http.ListenAndServe(port, nil)
+	}
+	
 }

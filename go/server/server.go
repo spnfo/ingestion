@@ -18,6 +18,24 @@ type IntakeData struct {
 	Position 	[]float64	`json:"position"`
 }
 
+type LeaderboardEntry struct {
+	Uid			int64 		`json:"uid"`
+	Chkpt		int64 		`json:"chkpt"`
+}
+
+type LastSprintPlace struct {
+	Place 		int64 		`json:"place"`
+	Points 		int64 		`json:"points"`
+}
+
+type RedisData struct {
+	Uid				int64 		`json:"uid"`
+	Checkpoint		float64 	`json:"checkpoint"`
+	InSprintZone 	bool 		`json:"inSprintZone"`
+	LeaderBoard 	[]LeaderboardEntry `json:"leaderboard"`
+	LastSprint 		LastSprintPlace `json:"last_sprint_place"`
+}
+
 var redisPool *redis.ClusterClient
 
 func initialize(hostnames string) *redis.ClusterClient {
@@ -71,8 +89,23 @@ func intake(w http.ResponseWriter, req *http.Request) {
 			panic(redisErr)
 		}
 
+		var redisPayload RedisData
+		err = json.Unmarshal([]byte(redisMsg.Payload), &redisPayload)
+		if err != nil {
+			fmt.Println(err.Error());
+			http.Error(w, err.Error(), 500)
+			return
+		}
+
+		resMsg, marshalErr := json.Marshal(redisPayload)
+		if marshalErr != nil {
+			fmt.Println(err.Error());
+			http.Error(w, err.Error(), 500)
+			return
+		}
+
 		w.Header().Set("content-type", "application/json")
-		w.Write([]byte(redisMsg.Payload))
+		w.Write(resMsg)
 
 	}()
 

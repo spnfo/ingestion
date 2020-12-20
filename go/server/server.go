@@ -19,7 +19,7 @@ type IntakeData struct {
 }
 
 type LeaderboardEntry struct {
-	Uid			int64 		`json:"uid"`
+	Uid			string 		`json:"uid"`
 	Chkpt		int64 		`json:"chkpt"`
 }
 
@@ -29,11 +29,15 @@ type LastSprintPlace struct {
 }
 
 type RedisData struct {
-	Uid				int64 		`json:"uid"`
+	Uid				string 		`json:"uid"`
 	Checkpoint		float64 	`json:"checkpoint"`
 	InSprintZone 	bool 		`json:"inSprintZone"`
 	LeaderBoard 	[]LeaderboardEntry `json:"leaderboard"`
 	LastSprint 		LastSprintPlace `json:"last_sprint_place"`
+}
+
+type ReturnData struct {
+	Data 	RedisData 	`json:"data"`
 }
 
 var redisPool *redis.ClusterClient
@@ -68,7 +72,12 @@ func intake(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	fmt.Println(msg.Req_Id)
+	fmt.Println(msg.Position)
+
+	if msg.Position[0] > 90 {
+		http.Error(w, "invalid position", 401)
+		return
+	}
 
 	pubsub := redisPool.Subscribe(fmt.Sprintf("%d-%d-%s-reply", msg.Event, msg.User, msg.Req_Id))
 
@@ -97,15 +106,17 @@ func intake(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		resMsg, marshalErr := json.Marshal(redisPayload)
-		if marshalErr != nil {
-			fmt.Println(err.Error());
-			http.Error(w, err.Error(), 500)
-			return
-		}
+		// resMsg, marshalErr := json.Marshal(redisPayload)
+		// if marshalErr != nil {
+		// 	fmt.Println(err.Error());
+		// 	http.Error(w, err.Error(), 500)
+		// 	return
+		// }
 
+		// w.Header().Set("content-type", "application/json")
+		// json.NewEncoder(w).Encode(redisPayload)
 		w.Header().Set("content-type", "application/json")
-		w.Write(resMsg)
+		w.Write([]byte(redisMsg.Payload))
 
 	}()
 

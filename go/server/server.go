@@ -16,11 +16,12 @@ type IntakeData struct {
 	Event		int64 		`json:"event"`
 	Req_Id 		string 		`json:"req_id"`
 	Position 	[]float64	`json:"position"`
+	Speed		float64 	`json:"speed"`
 }
 
 type LeaderboardEntry struct {
 	Uid			string 		`json:"uid"`
-	Chkpt		int64 		`json:"chkpt"`
+	Chkpt		float64 	`json:"chkpt"`
 }
 
 type LastSprintPlace struct {
@@ -72,7 +73,7 @@ func intake(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	fmt.Println(msg.Position)
+	// fmt.Println(msg.Position)
 
 	if msg.Position[0] > 90 {
 		http.Error(w, "invalid position", 401)
@@ -91,36 +92,19 @@ func intake(w http.ResponseWriter, req *http.Request) {
 			panic(redisErr)
 		}
 
-		fmt.Println(redisMsg.Channel, redisMsg.Payload)
+		// fmt.Println(redisMsg.Channel, redisMsg.Payload)
 
 		redisErr = pubsub.Close()
 		if redisErr != nil {
 			panic(redisErr)
 		}
 
-		var redisPayload RedisData
-		err = json.Unmarshal([]byte(redisMsg.Payload), &redisPayload)
-		if err != nil {
-			fmt.Println(err.Error());
-			http.Error(w, err.Error(), 500)
-			return
-		}
-
-		// resMsg, marshalErr := json.Marshal(redisPayload)
-		// if marshalErr != nil {
-		// 	fmt.Println(err.Error());
-		// 	http.Error(w, err.Error(), 500)
-		// 	return
-		// }
-
-		// w.Header().Set("content-type", "application/json")
-		// json.NewEncoder(w).Encode(redisPayload)
 		w.Header().Set("content-type", "application/json")
 		w.Write([]byte(redisMsg.Payload))
 
 	}()
 
-	fmt.Printf("%d-%d-pos\n", msg.Event, msg.User)
+	// fmt.Printf("%d-%d-pos\n", msg.Event, msg.User)
 	err = redisPool.Publish(fmt.Sprintf("%d-%d-pos", msg.Event, msg.User), string(b)).Err()
 	if err != nil {
 		panic(err)

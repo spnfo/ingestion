@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/go-redis/redis"
 )
@@ -73,7 +74,7 @@ func intake(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	// fmt.Println(msg.Position)
+	fmt.Println(msg.Position)
 
 	if msg.Position[0] > 90 {
 		http.Error(w, "invalid position", 401)
@@ -81,20 +82,32 @@ func intake(w http.ResponseWriter, req *http.Request) {
 	}
 
 	pubsub := redisPool.Subscribe(fmt.Sprintf("%d-%d-%s-reply", msg.Event, msg.User, msg.Req_Id))
+	pubsubChan := pubsub.Channel()
 
 	done := make(chan struct{})
 
 	go func() {
 		defer close(done)
 
-		redisMsg, redisErr := pubsub.ReceiveMessage()
-		if redisErr != nil {
-			panic(redisErr)
+		timer := time.NewTimer(time.Millisecond * 500);
+		var redisMsg *redis.Message
+
+		for {
+			select {
+
+			case redisMsg, _ = <-pubsubChan:
+				fmt.Println(redisMsg)
+				break;
+
+			case <-timer.C:
+				http.Error(w, "Server timeout", 408)
+				return
+			}
+
+			break
 		}
 
-		// fmt.Println(redisMsg.Channel, redisMsg.Payload)
-
-		redisErr = pubsub.Close()
+		redisErr := pubsub.Close()
 		if redisErr != nil {
 			panic(redisErr)
 		}

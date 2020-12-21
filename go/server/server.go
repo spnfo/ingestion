@@ -17,7 +17,6 @@ type IntakeData struct {
 	Event		int64 		`json:"event"`
 	Req_Id 		string 		`json:"req_id"`
 	Position 	[]float64	`json:"position"`
-	Speed		float64 	`json:"speed"`
 }
 
 type LeaderboardEntry struct {

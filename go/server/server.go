@@ -12,6 +12,21 @@ import (
 	"github.com/go-redis/redis"
 )
 
+type SprintStatus struct {
+	Num 		int64 	`json:"num"`
+	Started 	bool 	`json:"started"`
+}
+
+type Racer struct {
+	Uid 	int64 	`json:"uid"`
+}
+
+type RaceMetadata struct {
+	Rid 		int64 		`json:"rid"`
+	Racers		[]Racer 	`json:"racers"`
+	NumSprints 	int 		`json:"numSprints"`
+}
+
 type IntakeData struct {
 	User		int64 		`json:"user"`
 	Event		int64 		`json:"event"`
@@ -131,11 +146,57 @@ func intake(w http.ResponseWriter, req *http.Request) {
 
 }
 
+func startRace(w http.ResponseWriter, req *http.Request) {
+
+	b, err := ioutil.ReadAll(req.Body)
+	req.Body.Close()
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+
+	var msg RaceMetadata
+	err = json.Unmarshal(b, &msg)
+	if err != nil {
+		fmt.Println(err.Error());
+		http.Error(w, err.Error(), 500)
+		return
+	}
+
+	sprintSet := SprintStatus{
+		Num: 0,
+		Started: false,
+	}
+
+	sprintSetBytes, _ := json.Marshal(sprintSet)
+
+	for _, r := range msg.Racers {
+
+		redisPool.Set(fmt.Sprintf("%d-%d-chkpt", msg.Rid, r.Uid), 0, 0)
+		redisPool.Set(fmt.Sprintf("%d-%d-pts", msg.Rid, r.Uid), 0, 0)
+		redisPool.Set(fmt.Sprintf("%d-%d-sprint_num", msg.Rid, r.Uid), string(sprintSetBytes), 0)
+		redisPool.Del(fmt.Sprintf("%d-%d-pos", msg.Rid, r.Uid), fmt.Sprintf("%d-leaderboard", msg.Rid))
+
+		for i := 0; i < msg.NumSprints; i++ {
+			redisPool.Del(fmt.Sprintf("%d-%d-%d", msg.Rid, r.Uid, i), fmt.Sprintf("%d-%d-%d-place", msg.Rid, r.Uid, i))
+		}
+
+	}
+
+	for i := 0; i < msg.NumSprints; i++ {
+		redisPool.Del(fmt.Sprintf("%d-%d", msg.Rid, i))
+	}
+
+	w.WriteHeader(200)
+
+}
+
 func main() {
 
 	redisPool = initialize("127.0.0.1:7000,127.0.0.1:7001,127.0.0.1:7002")
 
 	http.HandleFunc("/intake", intake)
+	http.HandleFunc("/startRace", startRace)
 
 	port := ":" + os.Getenv("INGESTION_PORT")
 	fmt.Println("Listening on port " + port)

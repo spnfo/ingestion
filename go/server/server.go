@@ -184,7 +184,7 @@ func startRace(w http.ResponseWriter, req *http.Request) {
 	}
 
 	for i := 0; i < msg.NumSprints; i++ {
-		redisPool.Del(fmt.Sprintf("%d-%d", msg.Rid, i))
+		redisPool.Del(fmt.Sprintf("%d-%d-sprint_finish", msg.Rid, i))
 	}
 
 	w.WriteHeader(200)

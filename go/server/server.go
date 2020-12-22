@@ -170,15 +170,18 @@ func startRace(w http.ResponseWriter, req *http.Request) {
 
 	sprintSetBytes, _ := json.Marshal(sprintSet)
 
+	redisPool.Del(fmt.Sprintf("%d-leaderboard", msg.Rid))
+
 	for _, r := range msg.Racers {
 
 		redisPool.Set(fmt.Sprintf("%d-%d-chkpt", msg.Rid, r.Uid), 0, 0)
 		redisPool.Set(fmt.Sprintf("%d-%d-pts", msg.Rid, r.Uid), 0, 0)
 		redisPool.Set(fmt.Sprintf("%d-%d-sprint_num", msg.Rid, r.Uid), string(sprintSetBytes), 0)
-		redisPool.Del(fmt.Sprintf("%d-%d-pos", msg.Rid, r.Uid), fmt.Sprintf("%d-leaderboard", msg.Rid))
+		redisPool.Del(fmt.Sprintf("%d-%d-pos", msg.Rid, r.Uid))
 
 		for i := 0; i < msg.NumSprints; i++ {
-			redisPool.Del(fmt.Sprintf("%d-%d-%d", msg.Rid, r.Uid, i), fmt.Sprintf("%d-%d-%d-place", msg.Rid, r.Uid, i))
+			redisPool.Del(fmt.Sprintf("%d-%d-%d", msg.Rid, r.Uid, i))
+			redisPool.Del(fmt.Sprintf("%d-%d-%d-place", msg.Rid, r.Uid, i))
 		}
 
 	}

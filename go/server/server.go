@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"strconv"
 	"time"
 
 	"github.com/go-redis/redis"
@@ -27,6 +28,7 @@ type SprintStatus struct {
 
 type Racer struct {
 	Uid 	int64 	`json:"uid"`
+	Rid 	int64 	`json:"rid"`
 }
 
 type RaceMetadata struct {
@@ -214,7 +216,7 @@ func startRace(w http.ResponseWriter, req *http.Request) {
 
 }
 
-func destroyRace(w http.ResponseWriter, req *http.Request) {
+func finish(w http.ResponseWriter, req *http.Request) {
 
 	b, err := ioutil.ReadAll(req.Body)
 	req.Body.Close()
@@ -223,15 +225,40 @@ func destroyRace(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	_, err = http.Post(redisComputeDestroyUrl, "application/json", bytes.NewBuffer(b))
+	var racer Racer
+	err = json.Unmarshal(b, &racer)
 	if err != nil {
+		fmt.Println(err.Error());
 		http.Error(w, err.Error(), 500)
+		return
 	}
 
-	_, err = http.Post(sprintFinishDestroyUrl, "application/json", bytes.NewBuffer(b))
-	if err != nil {
-		http.Error(w, err.Error(), 500)
+	numRacers, _ := redisPool.Get(fmt.Sprintf("%d-numRacers", racer.Rid)).Result()
+	numFinished, _ := redisPool.Incr(fmt.Sprintf("%d-finished", racer.Rid)).Result()
+
+	numRacersInt, _ := strconv.Atoi(numRacers)
+
+	if numRacersInt == int(numFinished) {
+		destroyRace(racer)
 	}
+
+}
+
+
+func destroyRace(racer Racer) {
+
+	racerBytes, _ := json.Marshal(racer)
+
+	_, err := http.Post(redisComputeDestroyUrl, "application/json", bytes.NewBuffer(racerBytes))
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	_, err = http.Post(sprintFinishDestroyUrl, "application/json", bytes.NewBuffer(racerBytes))
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
 }
 
 func main() {
@@ -240,7 +267,7 @@ func main() {
 
 	http.HandleFunc("/intake", intake)
 	http.HandleFunc("/startRace", startRace)
-	http.HandleFunc("/destroyRace", destroyRace)
+	http.HandleFunc("/finish", finish)
 
 	port := ":" + os.Getenv("INGESTION_PORT")
 	fmt.Println("Listening on port " + port)

@@ -186,6 +186,8 @@ func startRace(w http.ResponseWriter, req *http.Request) {
 		redisPool.Set(fmt.Sprintf("%d-%d-pts", msg.Rid, r.Uid), 0, 0)
 		redisPool.Set(fmt.Sprintf("%d-%d-sprint_num", msg.Rid, r.Uid), string(sprintSetBytes), 0)
 		redisPool.Del(fmt.Sprintf("%d-%d-pos", msg.Rid, r.Uid))
+		redisPool.Set(fmt.Sprintf("%d-numRacers", msg.Rid), len(msg.Racers), 0)
+		redisPool.Set(fmt.Sprintf("%d-finished", msg.Rid), 0, 0)
 
 		for i := 0; i < msg.NumSprints; i++ {
 			redisPool.Del(fmt.Sprintf("%d-%d-%d", msg.Rid, r.Uid, i))

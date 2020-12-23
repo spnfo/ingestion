@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -10,6 +11,13 @@ import (
 	"time"
 
 	"github.com/go-redis/redis"
+)
+
+const (
+	redisComputeStartUrl = "http://localhost:2930/race"
+	sprintFinishStartUrl = "http://localhost:2929/race"
+	redisComputeDestroyUrl = "http://localhost:2930/destroyRace"
+	sprintFinishDestroyUrl = "http://localhost:2929/destroyRace"
 )
 
 type SprintStatus struct {
@@ -190,8 +198,38 @@ func startRace(w http.ResponseWriter, req *http.Request) {
 		redisPool.Del(fmt.Sprintf("%d-%d-sprint_finish", msg.Rid, i))
 	}
 
+	_, err = http.Post(redisComputeStartUrl, "application/json", bytes.NewBuffer(b))
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+	}
+
+	_, err = http.Post(sprintFinishStartUrl, "application/json", bytes.NewBuffer(b))
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+	}
+
 	w.WriteHeader(200)
 
+}
+
+func destroyRace(w http.ResponseWriter, req *http.Request) {
+
+	b, err := ioutil.ReadAll(req.Body)
+	req.Body.Close()
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+
+	_, err = http.Post(redisComputeDestroyUrl, "application/json", bytes.NewBuffer(b))
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+	}
+
+	_, err = http.Post(sprintFinishDestroyUrl, "application/json", bytes.NewBuffer(b))
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+	}
 }
 
 func main() {
@@ -200,6 +238,7 @@ func main() {
 
 	http.HandleFunc("/intake", intake)
 	http.HandleFunc("/startRace", startRace)
+	http.HandleFunc("/destroyRace", destroyRace)
 
 	port := ":" + os.Getenv("INGESTION_PORT")
 	fmt.Println("Listening on port " + port)

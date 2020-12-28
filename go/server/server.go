@@ -99,7 +99,7 @@ func intake(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	fmt.Println(msg.Position)
+	// fmt.Println(msg.Position)
 
 	if msg.Position[0] > 90 {
 		http.Error(w, "invalid position", 401)
@@ -121,7 +121,7 @@ func intake(w http.ResponseWriter, req *http.Request) {
 			select {
 
 			case redisMsg, _ = <-pubsubChan:
-				fmt.Println(redisMsg)
+				// fmt.Println(redisMsg)
 				break;
 
 			case <-timer.C:
@@ -247,6 +247,8 @@ func finish(w http.ResponseWriter, req *http.Request) {
 
 
 func destroyRace(racer Racer) {
+
+	fmt.Println("destroying race")
 
 	racerBytes, _ := json.Marshal(racer)
 

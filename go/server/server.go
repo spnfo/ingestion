@@ -19,6 +19,7 @@ const (
 	sprintFinishStartUrl = "http://localhost:2929/race"
 	redisComputeDestroyUrl = "http://localhost:2930/destroyRace"
 	sprintFinishDestroyUrl = "http://localhost:2929/destroyRace"
+	stopRaceUrl = "https://api.spnfo.com/stopRace"
 )
 
 type SprintStatus struct {
@@ -255,6 +256,11 @@ func destroyRace(racer Racer) {
 	}
 
 	_, err = http.Post(sprintFinishDestroyUrl, "application/json", bytes.NewBuffer(racerBytes))
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	_, err = http.Post(stopRaceUrl, "application/json", bytes.NewBuffer(racerBytes))
 	if err != nil {
 		fmt.Println(err.Error())
 	}

@@ -2,10 +2,12 @@ FROM node:12
 
 #FROM golang:latest #The golang dockerhub image, in case you want to split the two out
 
-RUN mkdir -p /app/js && \
-    mkdir -p /app/go
+RUN mkdir -p /app/
     
 WORKDIR /app
+
+#since it's a private repo, there may need to be some extra configuration here. Or if you've already cloned according to the directories here and are building locally, then this can be commented out
+#RUN git clone --depth=1 https://github.com/spnfo/ingestion ./app
 
 COPY package*.json /app/js/
 COPY * /app/go/

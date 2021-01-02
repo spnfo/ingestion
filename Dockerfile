@@ -1,9 +1,9 @@
 FROM node:12
 
-WORKDIR /usr/src/app
-
 RUN mkdir -p /app/node && \
     mkdir -p /app/go
+    
+WORKDIR /app
 
 COPY package*.json /app/node/
 COPY * /app/go/

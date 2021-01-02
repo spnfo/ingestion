@@ -1,6 +1,6 @@
 FROM node:12
 
-#FROM golang:1.15 #The golang dockerhub file, in case you want to split the two out
+#FROM golang:latest #The golang dockerhub image, in case you want to split the two out
 
 RUN mkdir -p /app/js && \
     mkdir -p /app/go

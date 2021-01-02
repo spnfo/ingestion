@@ -1,15 +1,15 @@
 FROM node:12
 
-RUN mkdir -p /app/node && \
+RUN mkdir -p /app/js && \
     mkdir -p /app/go
     
 WORKDIR /app
 
-COPY package*.json /app/node/
+COPY package*.json /app/js/
 COPY * /app/go/
 
 RUN apt-get install -y golang && \
-    cd node && \
+    cd js && \
     npm install . && \
     cd ../go &&
     go get -d -v ./... && \
